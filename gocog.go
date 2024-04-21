@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"github.com/kballard/go-shellquote"
-	"github.com/natefinch/gocog/processor"
+	"gocog/processor"
 	"io/ioutil"
 	"log"
 	"os"
