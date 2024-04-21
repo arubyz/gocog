@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -29,7 +28,7 @@ func New(file string, opt *Options) *Processor {
 
 	var logger *log.Logger
 	if opt.Quiet {
-		logger = log.New(ioutil.Discard, "", log.LstdFlags)
+		logger = log.New(io.Discard, "", log.LstdFlags)
 	} else {
 		logger = log.New(os.Stdout, "", log.LstdFlags)
 	}
@@ -91,7 +90,6 @@ func (p *Processor) Run() error {
 		}
 		return err
 	}
-	return nil
 }
 
 // tryCog encapsulates opening the original file, and creating the temporary output file.
@@ -249,7 +247,7 @@ func (p *Processor) generate(w io.Writer, lines []string, prefix string) error {
 func (p *Processor) runFile(f string, w io.Writer) error {
 	p.tracef("output file %v", f)
 	if p.Verbose {
-		contents, err := ioutil.ReadFile(f)
+		contents, err := os.ReadFile(f)
 		if err != nil {
 			return err
 		}
@@ -259,7 +257,7 @@ func (p *Processor) runFile(f string, w io.Writer) error {
 	if strings.Contains(cmd, "%s") {
 		cmd = fmt.Sprintf(cmd, f)
 	}
-	args := make([]string, len(p.Args), len(p.Args))
+	args := make([]string, len(p.Args))
 	for i, s := range p.Args {
 		if strings.Contains(s, "%s") {
 			args[i] = fmt.Sprintf(s, f)

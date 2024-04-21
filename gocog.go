@@ -6,7 +6,6 @@ import (
 	"github.com/jessevdk/go-flags"
 	"github.com/kballard/go-shellquote"
 	"gocog/processor"
-	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
@@ -89,7 +88,9 @@ func main() {
 
 // run initiates processing and then signals the waitgroup when finished
 func run(p *processor.Processor, wg *sync.WaitGroup) {
-	p.Run()
+	if err := p.Run(); err != nil {
+		p.Println(err)
+	}
 	wg.Done()
 }
 
@@ -137,7 +138,7 @@ func handleFilelist(name string, opts *processor.Options) ([]*processor.Processo
 	if opts.Verbose {
 		log.Printf("Processing filelist '%s'", name)
 	}
-	b, err := ioutil.ReadFile(name)
+	b, err := os.ReadFile(name)
 	if err != nil {
 		return nil, err
 	}
