@@ -9,7 +9,8 @@ type Options struct {
 	Args      []string `short:"a" long:"args" description:"Comma separated arguments to cmd, %s for the code file"`
 	Ext       string   `short:"e" long:"ext" description:"Extension to append to the generator filename"`
 	StartMark string   `short:"M" long:"startmark" description:"String that starts gocog statements"`
-	EndMark   string   `short:"E" long:"endmark" description:"String that ends gocog statements"`
+	OutMark   string   `short:"O" long:"outmark" description:"String that starts gocog output"`
+	EndMark   string   `short:"E" long:"endmark" description:"String that ends gocog output"`
 	Excise    bool     `short:"x" long:"excise" description:"Excise all the generated output without running the generators."`
 	Version   bool     `short:"V" long:"version" description:"Display the version of gocog"`
 	//	Checksum bool              `short:"c" description:"Checksum the output to protect it against accidental change."`

@@ -13,7 +13,7 @@ func main() {
   cmd.Run()
 }
 gocog}}} -->
-gocog v1.0 build 20130206
+gocog v1.0 build 20240421
 <!-- {{{end}}} -->
 
 Binaries for popular OSes are available on the [Downloads](https://github.com/natefinch/gocog/wiki/Downloads) page of the [wiki](https://github.com/natefinch/gocog/wiki)<br>
@@ -52,23 +52,24 @@ gocog}}} -->
 	  Command line options are passed to each command line in the file list, but options on the file list line
 	  will override command line options. You may have filelists specified inside filelist files.
 	
-	Help Options:
-	  -h, --help         Show this help message
-	
 	Application Options:
-	  -z, --eof          The end marker can be assumed at eof.
-	  -v, --verbose      enables verbose output
-	  -q, --quiet        turns off all output
-	  -S, --serial       Write to the specified cog files serially
-	  -c, --cmd          The command used to run the generator code (go)
-	  -a, --args         Comma separated arguments to cmd, %s for the code file
-	                     ([run, %s])
-	  -e, --ext          Extension to append to the generator filename (.go)
-	  -M, --startmark    String that starts gocog statements ([[[)
-	  -E, --endmark      String that ends gocog statements (]]])
-	  -x, --excise       Excise all the generated output without running the
-	                     generators.
-	  -V, --version      Display the version of gocog
+	  -z, --eof        The end marker can be assumed at eof.
+	  -v, --verbose    enables verbose output
+	  -q, --quiet      turns off all output
+	  -S, --serial     Write to the specified cog files serially
+	  -c, --cmd=       The command used to run the generator code
+	  -a, --args=      Comma separated arguments to cmd, %s for the code file
+	                   (default: [%s])
+	  -e, --ext=       Extension to append to the generator filename (default: .js)
+	  -M, --startmark= String that starts gocog statements (default: [[[generate]]])
+	  -O, --outmark=   String that starts gocog output (default: [[[output]]])
+	  -E, --endmark=   String that ends gocog output (default: [[[end]]])
+	  -x, --excise     Excise all the generated output without running the
+	                   generators.
+	  -V, --version    Display the version of gocog
+	
+	Help Options:
+	  -h, --help       Show this help message
 <!-- {{{end}}} -->
 
 How it works
@@ -77,9 +78,9 @@ gocog is a command line executable that processes in-line code in a file and out
 
 Code is embedded in comments in the given files, delimited thusly:
 
-    [[[gocog
+    [[[generate]]]
       <generator code that will be run to generate output>
-    gocog]]]
+    [[[output]]]
     [[[end]]]
 
 Anything written to standard out from the generator code will be injected between gocog]]] and [[[end]]]
@@ -94,10 +95,10 @@ The gocog marker tags can be preceded by any text (such as comment tags to preve
 
 Any non-whitespace text that precedes the gocog start mark will be treated as a single line comment tag and will be removed in the generator code that is written out - for example:
 
-	# [[[gocog
+	# [[[generate]]]
 	# do something here
 	#     and some indent
-	# gocog]]]
+	# [[[output]]]
 	# [[[end]]]
 
 output code (this is what will be written to a file and run by your favorite language):
@@ -126,7 +127,7 @@ Using generator code written in Go to write out properties for a C# class
     {
       public class Foo
       {
-        /* [[[gocog
+        /* [[[generate]]]
         package main
         import "fmt"
         func main() {
@@ -134,7 +135,7 @@ Using generator code written in Go to write out properties for a C# class
             fmt.Printf("\t\tpublic String %s { get; set; }\n", s)
           }
         }
-        gocog]]]  */
+        [[[output]]]  */
         // [[[end]]]
       }
     }
@@ -147,7 +148,7 @@ Output:
     {
       public class Foo
       {
-        /* [[[gocog
+        /* [[[generate]]]
         package main
         import "fmt"
         func main() {
@@ -155,7 +156,7 @@ Output:
             fmt.Printf("\t\tpublic String %s { get; set; }\n", s)
           }
         }
-        gocog]]]  */
+        [[[output]]]  */
         public String Bar { get; set; }
         public String Baz { get; set; }
         public String Bat { get; set; }

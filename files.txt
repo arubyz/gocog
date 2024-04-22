@@ -1,4 +1,4 @@
-gocog.go
-doc.go --eof 
-main.go --eof
-README.md --startmark={{{ --endmark=}}}
+gocog.go --ext go --cmd go --args run --args '%s'
+doc.go --eof --ext go --cmd go --args run --args '%s'
+main.go --eof --ext go --cmd go --args run --args '%s'
+README.md --startmark={{{gocog --outmark=gocog}}} --endmark={{{end}}} --ext go --cmd go --args run --args '%s'

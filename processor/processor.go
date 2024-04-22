@@ -142,7 +142,7 @@ func (p *Processor) gen(r *bufio.Reader, w io.Writer) error {
 // Any prefix before the startmark is returned so we can handle single line comment tags.
 func (p *Processor) cogPlainText(r *bufio.Reader, w io.Writer, firstRun bool) (prefix string, err error) {
 	p.tracef("cogging plaintext")
-	mark := p.StartMark + "gocog"
+	mark := p.StartMark
 	lines, found, err := readUntil(r, mark)
 	if err == io.EOF {
 		if found {
@@ -182,7 +182,7 @@ func (p *Processor) cogPlainText(r *bufio.Reader, w io.Writer, firstRun bool) (p
 // the prefix removed (this is to support single line comments)
 func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string) error {
 	p.tracef("cogging generator code")
-	lines, _, err := readUntil(r, "gocog"+p.EndMark)
+	lines, _, err := readUntil(r, p.OutMark)
 	if err == io.EOF {
 		return io.ErrUnexpectedEOF
 	}
@@ -276,7 +276,7 @@ func (p *Processor) runFile(f string, w io.Writer) error {
 func (p *Processor) cogToEnd(r *bufio.Reader, w io.Writer) error {
 	p.tracef("cogging to end")
 	// we'll drop all but the COG_END line, so no need to keep them in memory
-	line, found, err := findLine(r, p.StartMark+"end"+p.EndMark)
+	line, found, err := findLine(r, p.EndMark)
 	if err == io.EOF && !found {
 		if !p.UseEOF {
 			return io.ErrUnexpectedEOF

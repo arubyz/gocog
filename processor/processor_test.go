@@ -21,10 +21,10 @@ func TestCogPlainText(t *testing.T) {
 	tests := []CPTData{
 		{"", "", "", true, NoCogCode},
 		{"a\nb\nc", "", "", true, NoCogCode},
-		{"a\nb\n[[[gocog", "", "", true, io.ErrUnexpectedEOF},
-		{"a\nb\n[[[gocog\n", "a\nb\n[[[gocog\n", "", true, nil},
-		{"a\nb\n[[[gocog  stuff\n and more stuff\n", "a\nb\n[[[gocog  stuff\n", "", true, nil},
-		{"a\nb\n// [[[gocog\n", "a\nb\n// [[[gocog\n", "// ", true, nil},
+		{"a\nb\n[[[generate]]]", "", "", true, io.ErrUnexpectedEOF},
+		{"a\nb\n[[[generate]]]\n", "a\nb\n[[[generate]]]\n", "", true, nil},
+		{"a\nb\n[[[generate]]]  stuff\n and more stuff\n", "a\nb\n[[[generate]]]  stuff\n", "", true, nil},
+		{"a\nb\n// [[[generate]]]\n", "a\nb\n// [[[generate]]]\n", "// ", true, nil},
 	}
 
 	for i, test := range tests {

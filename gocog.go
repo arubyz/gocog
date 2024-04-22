@@ -23,11 +23,11 @@ func init() {
 
 func main() {
 	opts := processor.Options{
-		Command:   "go",
-		Args:      []string{"run", "%s"},
-		Ext:       ".go",
-		StartMark: "[[[",
-		EndMark:   "]]]",
+		Args:      []string{"%s"},
+		Ext:       ".js",
+		StartMark: "[[[" + "generate" + "]]]",
+		OutMark:   "[[[" + "output" + "]]]",
+		EndMark:   "[[[" + "end" + "]]]",
 	}
 
 	p := flags.NewParser(&opts, flags.Default)
@@ -45,7 +45,7 @@ func main() {
 	}
 
 	ver := ""
-	// [[[gocog
+	// [[[generate]]]
 	// package main
 	// import (
 	//   "fmt"
@@ -55,8 +55,8 @@ func main() {
 	// 	t := time.Now()
 	// 	fmt.Printf("\tver = \"%d%02d%02d\"\n", t.Year(), int(t.Month()), t.Day())
 	// }
-	// gocog]]]
-	ver = "20130206"
+	// [[[output]]]
+	ver = "20240421"
 	// [[[end]]]
 	if opts.Version {
 		fmt.Printf(version, ver)
