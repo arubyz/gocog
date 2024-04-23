@@ -8,9 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
-	"unicode"
 )
 
 // run executes the command with the given arguments, writing output to the given writer and errors to the logger.
@@ -28,7 +26,7 @@ func run(cmd string, args []string, stdout io.Writer, errLog *log.Logger) error 
 	return err
 }
 
-// writeNewFile creates a new file and writes the lines to the file, stripping out the prefix if it exists.
+// writeNewFile creates a new file and writes the lines to the file, stripping out the prefix.
 // This will return an error if the file already exists, or if there are any errors during creation.
 // the prefix will be removed if it is the first non-whitespace text in any line
 func writeNewFile(name string, lines []string, prefix string) error {
@@ -37,14 +35,10 @@ func writeNewFile(name string, lines []string, prefix string) error {
 		return err
 	}
 
-	var reg *regexp.Regexp
-	if len(prefix) > 0 {
-		reg = regexp.MustCompile(fmt.Sprintf(`^(\s*)%s`, regexp.QuoteMeta(prefix)))
-	}
-
+	skip := len(prefix)
 	for _, line := range lines {
-		if reg != nil {
-			line = reg.ReplaceAllString(line, `$1`)
+		if skip <= len(line) {
+			line = line[len(prefix):]
 		}
 		if _, err := out.Write([]byte(line)); err != nil {
 			if err2 := out.Close(); err2 != nil {
@@ -101,7 +95,7 @@ func createNew(filename string) (*os.File, error) {
 // getPrefix returns all the text before the given mark in the line with leftmost whitespace removed.
 func getPrefix(line, mark string) string {
 	if i := strings.Index(line, mark); i > -1 {
-		return strings.TrimLeftFunc(line[:i], unicode.IsSpace)
+		return line[:i]
 	}
 	return ""
 }

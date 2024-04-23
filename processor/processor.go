@@ -11,13 +11,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 var (
 	// Indicates a file was processed, but no gocog markers were found in it
 	NoCogCode = errors.New("NoCogCode")
-
-	newline byte = 10
 )
 
 // New creates a new Processor with the given options.
@@ -229,13 +228,13 @@ func (p *Processor) generate(w io.Writer, lines []string, prefix string) error {
 	if err := p.runFile(gen, &b); err != nil {
 		return err
 	}
-	if _, err := w.Write(b.Bytes()); err != nil {
-		return err
-	}
 
-	// make sure we always end with a newline so we keep [[[end]]] on its own line
-	if b.Len() > 0 && b.Bytes()[b.Len()-1] != newline {
-		if _, err := w.Write([]byte{newline}); err != nil {
+	trimmedPrefix := strings.TrimLeftFunc(prefix, unicode.IsSpace)
+	indent := strings.Repeat(" ", len(prefix)-len(trimmedPrefix))
+	scanner := bufio.NewScanner(strings.NewReader(b.String()))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if _, err := fmt.Fprintf(w, "%s%s\n", indent, line); err != nil {
 			return err
 		}
 	}

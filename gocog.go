@@ -23,8 +23,9 @@ func init() {
 
 func main() {
 	opts := processor.Options{
+		Command:   "perl",
 		Args:      []string{"%s"},
-		Ext:       ".js",
+		Ext:       ".pl",
 		StartMark: "[[[" + "generate" + "]]]",
 		OutMark:   "[[[" + "output" + "]]]",
 		EndMark:   "[[[" + "end" + "]]]",
