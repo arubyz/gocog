@@ -8,7 +8,7 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
 
 * Formatting and linting fixes.
 
-* Added the `--retain` (`-r`) argument to aid debugging by preventing temporary files
+* Added the `--retain` (`-r`) option to aid debugging by preventing temporary files
   with generator code from being deleted.
 
 * Changed the default generator language to Perl, which is available on virtually
@@ -57,11 +57,11 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
       // [[[generate]]]
       // print <<done
       // if (true)
-      //     printf("Hello, world")
+      //     printf("Hello, world");
       // done
       // [[[output]]]
       if (true)
-          printf("Hello, world")
+          printf("Hello, world");
       // [[[end]]]
   }
   ```
@@ -75,11 +75,11 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
       /* [[[generate]]]
          print <<done
          if (1)
-             printf("Hello, world")
+             printf("Hello, world");
          done
          [[[output]]] */
       if (1)
-          printf("Hello, world")
+          printf("Hello, world");
       /* [[[end]]] */
   }
   ```
@@ -93,6 +93,26 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
           printf("Hello, world");
       done
       [[[output]]] */
+      if (1)
+          printf("Hello, world");
+      /* [[[end]]] */
+  }
+  ```
+
+* Added the `--extraline` (`-L`) option to cause the line after the line with the output
+  mark to also be considered part of the output mark.  This accommodates generator code
+  in block comments where the comment end delimiter is on its own line, like this:
+  ```c
+  void main()
+  {
+      /*
+      [[[generate]]]
+      print <<done
+      if (1)
+          printf("Hello, world");
+      done
+      [[[output]]]
+      */
       if (1)
           printf("Hello, world");
       /* [[[end]]] */

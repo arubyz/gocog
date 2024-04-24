@@ -42,6 +42,7 @@ Application Options:
 	-M, --startmark= String that starts gocog statements (default: [[[generate]]])
 	-O, --outmark=   String that starts gocog output (default: [[[output]]])
 	-E, --endmark=   String that ends gocog output (default: [[[end]]])
+	-L, --extraline  Include an extra line as part of the output mark
 	-x, --excise     Excise all the generated output without running the
 	                 generators.
 	-r, --retain     Don't delete temporary files containing generator code.

@@ -29,7 +29,7 @@ func TestReadUntil(t *testing.T) {
 
 		r := bufio.NewReader(bytes.NewBufferString(test.s))
 
-		lines, found, err := readUntil(r, marker)
+		lines, found, err := readUntil(r, marker, false)
 		if len(lines) != test.count {
 			t.Errorf("ReadUntil Test %d: Incorrect number of lines returned."+
 				" Expected: %d, Got: %d", i, test.count, len(lines))

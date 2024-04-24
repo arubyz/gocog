@@ -140,7 +140,7 @@ func (p *Processor) gen(r *bufio.Reader, w io.Writer) error {
 func (p *Processor) cogPlainText(r *bufio.Reader, w io.Writer, firstRun bool) (prefix string, err error) {
 	p.tracef("cogging plaintext")
 	mark := p.StartMark
-	lines, found, err := readUntil(r, mark)
+	lines, found, err := readUntil(r, mark, false)
 	if err == io.EOF {
 		if found {
 			// found gocog statement, but nothing after it
@@ -179,7 +179,7 @@ func (p *Processor) cogPlainText(r *bufio.Reader, w io.Writer, firstRun bool) (p
 // the prefix removed (this is to support single line comments)
 func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string, counter int) error {
 	p.tracef("cogging generator code")
-	lines, _, err := readUntil(r, p.OutMark)
+	lines, _, err := readUntil(r, p.OutMark, p.ExtraLine)
 	if err == io.EOF {
 		return io.ErrUnexpectedEOF
 	}
@@ -196,7 +196,11 @@ func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string
 	p.tracef("Wrote %v lines to output file", len(lines))
 
 	if !p.Excise && len(lines) > 0 {
-		if err := p.generate(w, lines[:len(lines)-1], prefix, counter); err != nil {
+		ignored := 1
+		if p.ExtraLine {
+			ignored = 2
+		}
+		if err := p.generate(w, lines[:len(lines)-ignored], prefix, counter); err != nil {
 			return err
 		}
 	}

@@ -76,14 +76,19 @@ func writeNewFile(name string, lines []string, prefix string) error {
 }
 
 // readUntil reads and returns lines from a reader until the marker is found.
+// if extraLine is true then one additional line after the marker is included.
 // found is true if the marker was found. Note that found == true and err == io.EOF is possible.
-func readUntil(r *bufio.Reader, marker string) (lines []string, found bool, err error) {
+func readUntil(r *bufio.Reader, marker string, extraLine bool) (lines []string, found bool, err error) {
 	lines = make([]string, 0, 50)
 	for err == nil {
 		var line string
 		line, err = r.ReadString('\n')
 		lines = append(lines, line)
 		if strings.Contains(line, marker) {
+			if extraLine {
+				line, err = r.ReadString('\n')
+				lines = append(lines, line)
+			}
 			return lines, true, err
 		}
 	}

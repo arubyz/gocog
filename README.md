@@ -13,7 +13,7 @@ func main() {
   cmd.Run()
 }
 [[[OUTPUT]]] -->
-gocog v1.0 build 20240421
+gocog v1.0 build 20240423
 <!-- [[[END]]] -->
 
 Binaries for popular OSes are available on the [Downloads](https://github.com/natefinch/gocog/wiki/Downloads) page of the [wiki](https://github.com/natefinch/gocog/wiki)<br>
@@ -57,15 +57,17 @@ func main() {
 	  -v, --verbose    enables verbose output
 	  -q, --quiet      turns off all output
 	  -S, --serial     Write to the specified cog files serially
-	  -c, --cmd=       The command used to run the generator code
+	  -c, --cmd=       The command used to run the generator code (default: perl)
 	  -a, --args=      Comma separated arguments to cmd, %s for the code file
 	                   (default: [%s])
-	  -e, --ext=       Extension to append to the generator filename (default: .js)
+	  -e, --ext=       Extension to append to the generator filename (default: .pl)
 	  -M, --startmark= String that starts gocog statements (default: [[[generate]]])
 	  -O, --outmark=   String that starts gocog output (default: [[[output]]])
 	  -E, --endmark=   String that ends gocog output (default: [[[end]]])
+	  -L, --extraline  Include an extra line as part of the output mark
 	  -x, --excise     Excise all the generated output without running the
 	                   generators.
+	  -r, --retain     Don't delete temporary files containing generator code.
 	  -V, --version    Display the version of gocog
 	
 	Help Options:
