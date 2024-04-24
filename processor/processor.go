@@ -116,15 +116,13 @@ func (p *Processor) tryCog() (output string, err error) {
 
 // gen enacapsulates the process of generating text from an input and writing to an output.
 func (p *Processor) gen(r *bufio.Reader, w io.Writer) error {
-	firstRun := true
-	for {
-		prefix, err := p.cogPlainText(r, w, firstRun)
+	for counter := 1; ; counter++ {
+		prefix, err := p.cogPlainText(r, w, counter == 1)
 		if err != nil {
 			return err
 		}
-		firstRun = false
 
-		if err := p.cogGeneratorCode(r, w, prefix); err != nil {
+		if err := p.cogGeneratorCode(r, w, prefix, counter); err != nil {
 			return err
 		}
 
@@ -179,7 +177,7 @@ func (p *Processor) cogPlainText(r *bufio.Reader, w io.Writer, firstRun bool) (p
 // Writes out the generator code to a file with the given name
 // any lines that start with whitespace and then prefix will have
 // the prefix removed (this is to support single line comments)
-func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string) error {
+func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string, counter int) error {
 	p.tracef("cogging generator code")
 	lines, _, err := readUntil(r, p.OutMark)
 	if err == io.EOF {
@@ -198,7 +196,7 @@ func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string
 	p.tracef("Wrote %v lines to output file", len(lines))
 
 	if !p.Excise && len(lines) > 0 {
-		if err := p.generate(w, lines[:len(lines)-1], prefix); err != nil {
+		if err := p.generate(w, lines[:len(lines)-1], prefix, counter); err != nil {
 			return err
 		}
 	}
@@ -209,15 +207,17 @@ func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string
 // generate writes out the generator code to a file and runs it.
 // If running the code doesn't return any errors, the output is written to the output file.
 // The file with the generator code is always deleted at the end of this function.
-func (p *Processor) generate(w io.Writer, lines []string, prefix string) error {
+func (p *Processor) generate(w io.Writer, lines []string, prefix string, counter int) error {
 	p.tracef("generating runnable code")
 	name := filepath.Base(p.File)
 	dir := filepath.Dir(p.File)
 	// prefix the name to ensure it starts with alphanumeric, this is required
 	// to be go-runnable.
 	name = "cog_" + name
-	gen := fmt.Sprintf("%s_cog_%s", filepath.Join(dir, name), p.Ext)
-	defer os.Remove(gen)
+	gen := fmt.Sprintf("%s_cog_%d_%s", filepath.Join(dir, name), counter, p.Ext)
+	if !p.Retain {
+		defer os.Remove(gen)
+	}
 
 	// write all but the last line to the generator file
 	if err := writeNewFile(gen, lines, prefix); err != nil {

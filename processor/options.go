@@ -12,6 +12,7 @@ type Options struct {
 	OutMark   string   `short:"O" long:"outmark" description:"String that starts gocog output"`
 	EndMark   string   `short:"E" long:"endmark" description:"String that ends gocog output"`
 	Excise    bool     `short:"x" long:"excise" description:"Excise all the generated output without running the generators."`
+	Retain    bool     `short:"r" long:"retain" description:"Don't delete temporary files containing generator code."`
 	Version   bool     `short:"V" long:"version" description:"Display the version of gocog"`
 	//	Checksum bool              `short:"c" description:"Checksum the output to protect it against accidental change."`
 	//	Delete   bool              `short:"d" description:"Delete the generator code from the output file."`

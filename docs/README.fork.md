@@ -8,11 +8,17 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
 
 * Formatting and linting fixes.
 
-* Changed the default value for `--ext` to `pl`.
+* Added the `--retain` (`-r`) argument to aid debugging by preventing temporary files
+  with generator code from being deleted.
 
-* Changed the default value for `--cmd` to `perl`.
+* Changed the default generator language to Perl, which is available on virtually
+  all platforms.
 
-* Changed the default value for `--args` to `%s`.
+  * Changed the default value for `--ext` to `pl`.
+
+  * Changed the default value for `--cmd` to `perl`.
+
+  * Changed the default value for `--args` to `%s`.
 
 * Generalized the `--startmark` and `--endmark` arguments and added an additional `--outmark` argument.
   New default values for these arguments enable syntax as follows:
