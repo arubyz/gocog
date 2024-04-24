@@ -42,7 +42,8 @@ func writeNewFile(name string, lines []string, prefix string) error {
 	expectPrefix := true
 	skip := len(prefix)
 	for _, line := range lines {
-		indent := len(line) - len(strings.TrimLeftFunc(line, unicode.IsSpace))
+		nonIndent := len(strings.TrimLeftFunc(line, unicode.IsSpace))
+		indent := len(line) - nonIndent
 		if firstLine {
 			if !strings.HasPrefix(line, prefix) {
 				expectPrefix = false
@@ -53,12 +54,13 @@ func writeNewFile(name string, lines []string, prefix string) error {
 				return fmt.Errorf("Line has invalid prefix: %s", line)
 			}
 		} else {
-			if indent < skip {
+			// Allow lines with insufficient indent if they are otherwise empty
+			if indent < skip && 0 < nonIndent {
 				return fmt.Errorf("Line has invalid indent: %s", line)
 			}
 		}
 		firstLine = false
-		line = line[skip:]
+		line = line[min(len(line), skip):]
 		if _, err := out.Write([]byte(line)); err != nil {
 			if err2 := out.Close(); err2 != nil {
 				return fmt.Errorf("Error writing to and closing newfile %s: %s%s", name, err, err2)
