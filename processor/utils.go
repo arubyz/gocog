@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"unicode"
 )
 
 // run executes the command with the given arguments, writing output to the given writer and errors to the logger.
@@ -28,18 +29,36 @@ func run(cmd string, args []string, stdout io.Writer, errLog *log.Logger) error 
 
 // writeNewFile creates a new file and writes the lines to the file, stripping out the prefix.
 // This will return an error if the file already exists, or if there are any errors during creation.
-// the prefix will be removed if it is the first non-whitespace text in any line
+// If the first line of generator code begins with the prefix, then it is expected that all other
+// lines begin with the prefix (for line-oriented comments).  Otherwise it is expected that all
+// lines start with an indent at least as large as the first line (for block-style comments).
 func writeNewFile(name string, lines []string, prefix string) error {
 	out, err := createNew(name)
 	if err != nil {
 		return err
 	}
 
+	firstLine := true
+	expectPrefix := true
 	skip := len(prefix)
 	for _, line := range lines {
-		if skip <= len(line) {
-			line = line[len(prefix):]
+		indent := len(line) - len(strings.TrimLeftFunc(line, unicode.IsSpace))
+		if firstLine {
+			if !strings.HasPrefix(line, prefix) {
+				expectPrefix = false
+				skip = indent
+			}
+		} else if expectPrefix {
+			if !strings.HasPrefix(line, prefix) {
+				return fmt.Errorf("Line has invalid prefix: %s", line)
+			}
+		} else {
+			if indent < skip {
+				return fmt.Errorf("Line has invalid indent: %s", line)
+			}
 		}
+		firstLine = false
+		line = line[skip:]
 		if _, err := out.Write([]byte(line)); err != nil {
 			if err2 := out.Close(); err2 != nil {
 				return fmt.Errorf("Error writing to and closing newfile %s: %s%s", name, err, err2)

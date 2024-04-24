@@ -1,4 +1,4 @@
-/* [[[generate]]]
+/* [[[GENERATE]]]
 package main
 import(
   "fmt"
@@ -15,7 +15,7 @@ func main() {
   fmt.Print("*","/", "\n")
   fmt.Println("package main")
 }
-[[[output]]] */
+[[[OUTPUT]]] */
 
 /*
 Package main creates an executable that will generate text from inline sourcecode.

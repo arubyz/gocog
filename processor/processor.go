@@ -51,7 +51,7 @@ func (p *Processor) tracef(format string, v ...interface{}) {
 // Run processes the input file with the options specified.
 // This will read the file, rewriting to a temporary file
 // then run any embedded code, using the given options.
-// It cleans up and code files it writes, and only overwrites the
+// It cleans up any code files it writes, and only overwrites the
 // original if generation was successful.
 func (p *Processor) Run() error {
 	p.tracef("Processing file '%s'", p.File)
@@ -229,6 +229,7 @@ func (p *Processor) generate(w io.Writer, lines []string, prefix string) error {
 		return err
 	}
 
+	// indent each output line according to the indent of the start line
 	trimmedPrefix := strings.TrimLeftFunc(prefix, unicode.IsSpace)
 	indent := strings.Repeat(" ", len(prefix)-len(trimmedPrefix))
 	scanner := bufio.NewScanner(strings.NewReader(b.String()))

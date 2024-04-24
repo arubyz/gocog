@@ -26,9 +26,9 @@ func main() {
 		Command:   "perl",
 		Args:      []string{"%s"},
 		Ext:       ".pl",
-		StartMark: "[[[" + "generate" + "]]]",
-		OutMark:   "[[[" + "output" + "]]]",
-		EndMark:   "[[[" + "end" + "]]]",
+		StartMark: "[[[generate]]]",
+		OutMark:   "[[[output]]]",
+		EndMark:   "[[[end]]]",
 	}
 
 	p := flags.NewParser(&opts, flags.Default)
@@ -46,7 +46,7 @@ func main() {
 	}
 
 	ver := ""
-	// [[[generate]]]
+	// [[[GENERATE]]]
 	// package main
 	// import (
 	//   "fmt"
@@ -56,9 +56,9 @@ func main() {
 	// 	t := time.Now()
 	// 	fmt.Printf("\tver = \"%d%02d%02d\"\n", t.Year(), int(t.Month()), t.Day())
 	// }
-	// [[[output]]]
-	ver = "20240421"
-	// [[[end]]]
+	// [[[OUTPUT]]]
+	ver = "20240423"
+	// [[[END]]]
 	if opts.Version {
 		fmt.Printf(version, ver)
 		os.Exit(0)

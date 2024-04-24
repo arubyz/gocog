@@ -95,10 +95,10 @@ type PrefixData struct {
 
 func TestGetPrefix(t *testing.T) {
 	tests := []PrefixData{
-		{"     // START", "// "},
-		{"\t #START", "#"},
+		{"     // START", "     // "},
+		{"\t #START", "\t #"},
 		{"START", ""},
-		{"   \t  START", ""},
+		{"   \t  START", "   \t  "},
 		{"//START", "//"},
 	}
 
