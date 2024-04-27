@@ -97,8 +97,9 @@ func readUntil(
 				submatch = line[matches[2]:matches[3]]
 			}
 			if extraLine {
-				line, err = r.ReadString('\n')
-				lines = append(lines, line)
+				var nextLine string
+				nextLine, err = r.ReadString('\n')
+				lines = append(lines, nextLine)
 			}
 			return lines, true, line[:matches[0]], submatch, err
 		}
