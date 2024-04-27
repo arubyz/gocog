@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"unicode"
 )
@@ -77,31 +78,41 @@ func writeNewFile(name string, lines []string, prefix string) error {
 
 // readUntil reads and returns lines from a reader until the marker is found.
 // if extraLine is true then one additional line after the marker is included.
+// start returns the index of the first character of the found marker.
+// submatch returns the values of the first regexp group (if any) in marker.
 // found is true if the marker was found. Note that found == true and err == io.EOF is possible.
-func readUntil(r *bufio.Reader, marker string, extraLine bool) (lines []string, found bool, err error) {
+func readUntil(
+	r *bufio.Reader,
+	marker *regexp.Regexp,
+	extraLine bool,
+) (lines []string, found bool, prefix string, submatch string, err error) {
 	lines = make([]string, 0, 50)
 	for err == nil {
 		var line string
 		line, err = r.ReadString('\n')
 		lines = append(lines, line)
-		if strings.Contains(line, marker) {
+		if matches := marker.FindStringSubmatchIndex(line); matches != nil {
+			submatch := ""
+			if 4 <= len(matches) {
+				submatch = line[matches[2]:matches[3]]
+			}
 			if extraLine {
 				line, err = r.ReadString('\n')
 				lines = append(lines, line)
 			}
-			return lines, true, err
+			return lines, true, line[:matches[0]], submatch, err
 		}
 	}
-	return lines, false, err
+	return lines, false, "", "", err
 }
 
 // findLine reads lines from a reader until the marker is found, then the line with the marker is returned.
 // found is true if the marker was found. Note that found == true and err == io.EOF is possible.
-func findLine(r *bufio.Reader, marker string) (line string, found bool, err error) {
+func findLine(r *bufio.Reader, marker *regexp.Regexp) (line string, found bool, err error) {
 	for err == nil {
 		line, err = r.ReadString('\n')
 		if err == nil || err == io.EOF {
-			if strings.Contains(line, marker) {
+			if matches := marker.FindStringSubmatch(line); matches != nil {
 				return line, true, err
 			}
 		}
@@ -116,12 +127,4 @@ func createNew(filename string) (*os.File, error) {
 		return f, fmt.Errorf("File '%s' already exists.", filename)
 	}
 	return f, err
-}
-
-// getPrefix returns all the text before the given mark in the line with leftmost whitespace removed.
-func getPrefix(line, mark string) string {
-	if i := strings.Index(line, mark); i > -1 {
-		return line[:i]
-	}
-	return ""
 }

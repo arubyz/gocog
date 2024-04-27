@@ -1,7 +1,7 @@
 gocog - generate code for any language, with any language
 =====
 
-<!-- [[[GENERATE]]]
+<!-- @GENERATE@
 package main
 import(
   "os"
@@ -12,16 +12,16 @@ func main() {
   cmd.Stdout = os.Stdout
   cmd.Run()
 }
-[[[OUTPUT]]] -->
+@OUTPUT@ -->
 gocog v1.0 build 20240423
-<!-- [[[END]]] -->
+<!-- @END@ -->
 
 Binaries for popular OSes are available on the [Downloads](https://github.com/natefinch/gocog/wiki/Downloads) page of the [wiki](https://github.com/natefinch/gocog/wiki)<br>
 
 If you don't want to work on the sourcecode, you can just download a binary for gocog and use it for your own project. They require no installation and have no prerequisites. Copy and go.
 
 Design of gocog is heavily based on [cog.py](http://nedbatchelder.com/code/cog/).  Many thanks to Ned Batchelder for a really great design.
-<!-- [[[GENERATE]]]
+<!-- @GENERATE@
 package main
 import(
   "bytes"
@@ -43,7 +43,7 @@ func main() {
     }
   }
 }
-[[[OUTPUT]]] -->
+@OUTPUT@ -->
 	Usage:
 	  gocog [OPTIONS] [INFILE | @FILELIST] ...
 	
@@ -72,7 +72,7 @@ func main() {
 	
 	Help Options:
 	  -h, --help       Show this help message
-<!-- [[[END]]] -->
+<!-- @END@ -->
 
 How it works
 ------

@@ -1,4 +1,4 @@
-gocog.go --startmark=[[[GENERATE]]] --outmark=[[[OUTPUT]]] --endmark=[[[END]]] --ext go --cmd go --args run --args '%s'
-doc.go --startmark=[[[GENERATE]]] --outmark=[[[OUTPUT]]] --endmark=[[[END]]] --eof --ext go --cmd go --args run --args '%s'
-main.go --startmark=[[[GENERATE]]] --outmark=[[[OUTPUT]]] --endmark=[[[END]]] --eof --ext go --cmd go --args run --args '%s'
-README.md --startmark=[[[GENERATE]]] --outmark=[[[OUTPUT]]] --endmark=[[[END]]] --ext go --cmd go --args run --args '%s'
+gocog.go --startmark=@GENERATE@ --outmark=@OUTPUT@ --endmark=@END@ --ext go --cmd go --args run --args '%s'
+doc.go --startmark=@GENERATE@ --outmark=@OUTPUT@ --endmark=@END@ --eof --ext go --cmd go --args run --args '%s'
+main.go --startmark=@GENERATE@ --outmark=@OUTPUT@ --endmark=@END@ --eof --ext go --cmd go --args run --args '%s'
+README.md --startmark=@GENERATE@ --outmark=@OUTPUT@ --endmark=@END@ --ext go --cmd go --args run --args '%s'

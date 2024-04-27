@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"regexp"
 	"testing"
 )
 
@@ -29,7 +30,7 @@ func TestReadUntil(t *testing.T) {
 
 		r := bufio.NewReader(bytes.NewBufferString(test.s))
 
-		lines, found, err := readUntil(r, marker, false)
+		lines, found, _, _, err := readUntil(r, regexp.MustCompile(marker), false)
 		if len(lines) != test.count {
 			t.Errorf("ReadUntil Test %d: Incorrect number of lines returned."+
 				" Expected: %d, Got: %d", i, test.count, len(lines))
@@ -70,7 +71,7 @@ func TestFindLine(t *testing.T) {
 
 		r := bufio.NewReader(bytes.NewBufferString(test.s))
 
-		line, found, err := findLine(r, marker)
+		line, found, err := findLine(r, regexp.MustCompile(marker))
 		if line != test.line {
 			t.Errorf("ReadLine Test %d: Incorrect line returned. Expected: '%s', Got: '%s'", i, test.line, line)
 		}
@@ -86,28 +87,4 @@ func TestFindLine(t *testing.T) {
 		}
 	}
 
-}
-
-type PrefixData struct {
-	input  string
-	prefix string
-}
-
-func TestGetPrefix(t *testing.T) {
-	tests := []PrefixData{
-		{"     // START", "     // "},
-		{"\t #START", "\t #"},
-		{"START", ""},
-		{"   \t  START", "   \t  "},
-		{"//START", "//"},
-	}
-
-	marker := "START"
-	for i, test := range tests {
-		_ = i
-		prefix := getPrefix(test.input, marker)
-		if prefix != test.prefix {
-			t.Errorf("GetPrefix Test %d: incorrect prefix returned. Expected: '%s', Got: '%s'", i, test.prefix, prefix)
-		}
-	}
 }

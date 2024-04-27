@@ -23,12 +23,11 @@ func init() {
 
 func main() {
 	opts := processor.Options{
-		Command:   "perl",
 		Args:      []string{"%s"},
-		Ext:       ".pl",
-		StartMark: "[[[generate]]]",
-		OutMark:   "[[[output]]]",
-		EndMark:   "[[[end]]]",
+		Ext:       ".txt",
+		StartMark: "\\[\\[\\[generate\\s*([^]]*)\\]\\]\\]",
+		OutMark:   "\\[\\[\\[output\\]\\]\\]",
+		EndMark:   "\\[\\[\\[end\\]\\]\\]",
 	}
 
 	p := flags.NewParser(&opts, flags.Default)
@@ -46,7 +45,7 @@ func main() {
 	}
 
 	ver := ""
-	// [[[GENERATE]]]
+	// @GENERATE@
 	// package main
 	// import (
 	//   "fmt"
@@ -56,9 +55,9 @@ func main() {
 	// 	t := time.Now()
 	// 	fmt.Printf("\tver = \"%d%02d%02d\"\n", t.Year(), int(t.Month()), t.Day())
 	// }
-	// [[[OUTPUT]]]
-	ver = "20240423"
-	// [[[END]]]
+	// @OUTPUT@
+	ver = "20240426"
+	// @END@
 	if opts.Version {
 		fmt.Printf(version, ver)
 		os.Exit(0)

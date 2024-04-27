@@ -11,21 +11,20 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
 * Added the `--retain` (`-r`) option to aid debugging by preventing temporary files
   with generator code from being deleted.
 
-* Changed the default generator language to Perl, which is available on virtually
-  all platforms.
+* Removed the default value of `go` for `--cmd`, requiring it to be explicitly specified 
+  either on the command line or via the start mark (see below).  Also changed the default
+  for `--ext` to `.txt` and for `--args` to `%s`, which are defaults that work well for
+  a broad set of (non-Go) languages processors.
 
-  * Changed the default value for `--ext` to `pl`.
-
-  * Changed the default value for `--cmd` to `perl`.
-
-  * Changed the default value for `--args` to `%s`.
-
-* Generalized the `--startmark` and `--endmark` arguments and added an additional `--outmark` argument.
-  New default values for these arguments enable syntax as follows:
+* Generalized the `--startmark` and `--endmark` arguments and added an additional `--outmark`
+  argument.  The specification of markers was also changed from literal strings to regular
+  expressions.  For `--startmark` specifically, if the regular expression defines a group
+  then the value that group matches is used as the command to process the generator code
+  for that block.  These changes enable syntax as follows:
   ```c
   void main()
   {
-    // [[[generate]]]
+    // [[[generate perl]]]
     // $answer = sqrt(42);
     // print "printf(\"the answer is $answer\");";
     // [[[output]]]
@@ -35,7 +34,7 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
   ```
   The syntax of the original version of `gocog` can be enabled with:
   ```sh
-  gocog --startmark '[[[gocog' --outmark 'gocog]]]' --endmark '[[[end]]]'
+  gocog --startmark '\[\[\[gocog' --outmark 'gocog\]\]\]' --endmark '\[\[\[end\]\]\]'
   ```
 
 * The output of generator code is indented according to the first non-whitespace character
@@ -44,60 +43,61 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
 
 * The logic used to remove indentation and/or comment prefixes from generator code has
   been improved to better support generator code which is column-sensitive (such as perl
-  [here documents](https://en.wikipedia.org/wiki/Here_document) delimiters which must
+  [here document](https://en.wikipedia.org/wiki/Here_document) delimiters which must
   occur on the first column).  The rules are:
 
-  If the first line of generator code has the same prefix (including indent) as the line
-  with the start mark, then all lines of generator code are expected to start with that
-  same prefix (which is remove).  This handles generator code in line-oriented comments
-  like this:
-  ```cpp
-  void main()
-  {
-      // [[[generate]]]
-      // print <<done
-      // if (true)
-      //     printf("Hello, world");
-      // done
-      // [[[output]]]
-      if (true)
-          printf("Hello, world");
-      // [[[end]]]
-  }
-  ```
+  1. If the first line of generator code has the same prefix (including indent) as the line
+     with the start mark, then all lines of generator code are expected to start with that
+     same prefix (which is remove).  This handles generator code in line-oriented comments
+     like this:
+     ```cpp
+     void main()
+     {
+         // [[[generate perl]]]
+         // print <<done
+         // if (true)
+         //     printf("Hello, world");
+         // done
+         // [[[output]]]
+         if (true)
+             printf("Hello, world");
+         // [[[end]]]
+     }
+     ```
 
-  Otherwise, all lines of generator code are expected to have an indent at least as large
-  as the indent of the first line of generator code.  This handles generator code in block
-  comments such as this:
-  ```c
-  void main()
-  {
-      /* [[[generate]]]
+  2. Otherwise all lines of generator code are expected to have an indent at least as large
+     as the indent of the first line of generator code, and each line is un-indented according
+     to the indent of the first line of generator code.  This handles generator code in block
+     comments such as this:
+     ```c
+     void main()
+     {
+         /* [[[generate perl]]]
+            print <<done
+            if (1)
+                printf("Hello, world");
+            done
+            [[[output]]] */
+         if (1)
+             printf("Hello, world");
+         /* [[[end]]] */
+     }
+     ```
+     or this:
+     ```c
+     void main()
+     {
+         /* [[[generate perl]]]
          print <<done
          if (1)
              printf("Hello, world");
          done
          [[[output]]] */
-      if (1)
-          printf("Hello, world");
-      /* [[[end]]] */
-  }
-  ```
-  or this:
-  ```c
-  void main()
-  {
-      /* [[[generate]]]
-      print <<done
-      if (1)
-          printf("Hello, world");
-      done
-      [[[output]]] */
-      if (1)
-          printf("Hello, world");
-      /* [[[end]]] */
-  }
-  ```
+         if (1)
+             printf("Hello, world");
+         /* [[[end]]] */
+     }
+     ```
 
 * Added the `--extraline` (`-L`) option to cause the line after the line with the output
   mark to also be considered part of the output mark.  This accommodates generator code
@@ -106,7 +106,7 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
   void main()
   {
       /*
-      [[[generate]]]
+      [[[generate perl]]]
       print <<done
       if (1)
           printf("Hello, world");

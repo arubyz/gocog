@@ -16,15 +16,15 @@ type CPTData struct {
 }
 
 func TestCogPlainText(t *testing.T) {
-	p := New("foo", &Options{StartMark: "[[["})
+	p := New("foo", &Options{StartMark: "@GENERATE@"})
 
 	tests := []CPTData{
 		{"", "", "", true, NoCogCode},
 		{"a\nb\nc", "", "", true, NoCogCode},
-		{"a\nb\n[[[generate]]]", "", "", true, io.ErrUnexpectedEOF},
-		{"a\nb\n[[[generate]]]\n", "a\nb\n[[[generate]]]\n", "", true, nil},
-		{"a\nb\n[[[generate]]]  stuff\n and more stuff\n", "a\nb\n[[[generate]]]  stuff\n", "", true, nil},
-		{"a\nb\n// [[[generate]]]\n", "a\nb\n// [[[generate]]]\n", "// ", true, nil},
+		{"a\nb\n@GENERATE@", "", "", true, io.ErrUnexpectedEOF},
+		{"a\nb\n@GENERATE@\n", "a\nb\n@GENERATE@\n", "", true, nil},
+		{"a\nb\n@GENERATE@  stuff\n and more stuff\n", "a\nb\n@GENERATE@  stuff\n", "", true, nil},
+		{"a\nb\n// @GENERATE@\n", "a\nb\n// @GENERATE@\n", "// ", true, nil},
 	}
 
 	for i, test := range tests {
@@ -33,7 +33,7 @@ func TestCogPlainText(t *testing.T) {
 		out := &bytes.Buffer{}
 
 		r := bufio.NewReader(in)
-		prefix, err := p.cogPlainText(r, out, test.first)
+		prefix, _, err := p.cogPlainText(r, out, test.first)
 
 		if prefix != test.prefix {
 			t.Errorf("CogPlainText Test %d: Expected prefix: '%s', Got prefix: '%s'", i, test.prefix, prefix)
@@ -61,16 +61,16 @@ func TestCogToEnd(t *testing.T) {
 	tests := []CTEData{
 		{"", "", false, io.ErrUnexpectedEOF},
 		{"", "", true, io.EOF},
-		{"1\n2\n[[[end]]]", "[[[end]]]", false, io.EOF},
-		{"1\n2\n[[[end]]]\n", "[[[end]]]\n", false, nil},
+		{"1\n2\n@END@", "@END@", false, io.EOF},
+		{"1\n2\n@END@\n", "@END@\n", false, nil},
 		{"1\n2", "", true, io.EOF},
 		{"1\n2", "", false, io.ErrUnexpectedEOF},
-		{"1\n2\n// [[[end]]]\n", "// [[[end]]]\n", false, nil},
+		{"1\n2\n// @END@\n", "// @END@\n", false, nil},
 	}
 
 	opts := &Options{
-		StartMark: "[[[",
-		EndMark:   "]]]",
+		StartMark: "@GENERATE@",
+		EndMark:   "@END@",
 	}
 	p := New("foo", opts)
 

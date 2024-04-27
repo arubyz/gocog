@@ -1,4 +1,4 @@
-// [[[GENERATE]]]
+// @GENERATE@
 // package main
 // import(
 //   "fmt"
@@ -15,7 +15,7 @@
 //   fmt.Print("*","/", "\n")
 //   fmt.Println("package documentation")
 // }
-// [[[OUTPUT]]]
+// @OUTPUT@
 
 /*
 Command gocog creates an executable that will generate text from sourcecode inlined in another file.

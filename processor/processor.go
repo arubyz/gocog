@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"unicode"
 )
@@ -31,12 +32,22 @@ func New(file string, opt *Options) *Processor {
 	} else {
 		logger = log.New(os.Stdout, "", log.LstdFlags)
 	}
-	return &Processor{file, opt, logger}
+	return &Processor{
+		file,
+		regexp.MustCompile(opt.StartMark),
+		regexp.MustCompile(opt.OutMark),
+		regexp.MustCompile(opt.EndMark),
+		opt,
+		logger,
+	}
 }
 
 // Processor holds the data for generating code for a specific file.
 type Processor struct {
-	File string
+	File        string
+	StartRegexp *regexp.Regexp
+	OutRegexp   *regexp.Regexp
+	EndRegexp   *regexp.Regexp
 	*Options
 	*log.Logger
 }
@@ -117,12 +128,12 @@ func (p *Processor) tryCog() (output string, err error) {
 // gen enacapsulates the process of generating text from an input and writing to an output.
 func (p *Processor) gen(r *bufio.Reader, w io.Writer) error {
 	for counter := 1; ; counter++ {
-		prefix, err := p.cogPlainText(r, w, counter == 1)
+		prefix, cmd, err := p.cogPlainText(r, w, counter == 1)
 		if err != nil {
 			return err
 		}
 
-		if err := p.cogGeneratorCode(r, w, prefix, counter); err != nil {
+		if err := p.cogGeneratorCode(r, w, prefix, counter, cmd); err != nil {
 			return err
 		}
 
@@ -137,49 +148,62 @@ func (p *Processor) gen(r *bufio.Reader, w io.Writer) error {
 // finding the start mark, we won't write anything to the output file.
 // Otherwise we'll write this plaintext back out to the output file as-is.
 // Any prefix before the startmark is returned so we can handle single line comment tags.
-func (p *Processor) cogPlainText(r *bufio.Reader, w io.Writer, firstRun bool) (prefix string, err error) {
+// The match for the first regexp group (if any) in startMark is returned,
+func (p *Processor) cogPlainText(
+	r *bufio.Reader,
+	w io.Writer,
+	firstRun bool,
+) (prefix string, cmd string, err error) {
 	p.tracef("cogging plaintext")
-	mark := p.StartMark
-	lines, found, err := readUntil(r, mark, false)
+	lines, found, prefix, cmd, err := readUntil(r, p.StartRegexp, false)
 	if err == io.EOF {
 		if found {
 			// found gocog statement, but nothing after it
-			return "", io.ErrUnexpectedEOF
+			return "", "", io.ErrUnexpectedEOF
 		}
 		if firstRun {
 			// default case - no cog code, don't bother to write out anything
-			return "", NoCogCode
+			return "", "", NoCogCode
 		}
 		// didn't find it, but this isn't the first time we've run
 		// so no big deal, we just ran off the end of the file.
 	}
 	if err != nil && err != io.EOF {
-		return "", err
+		return "", "", err
 	}
 
 	// we can just write out the non-cog code to the output file
 	// this also writes out the cog start line (if any)
 	for _, line := range lines {
 		if _, err := w.Write([]byte(line)); err != nil {
-			return "", err
+			return "", "", err
 		}
 	}
 	p.tracef("Wrote %v lines to output file", len(lines))
 
 	if !found {
-		return "", err
+		return "", "", err
 	}
 
-	return getPrefix(lines[len(lines)-1], mark), err
+	return prefix, cmd, err
 }
 
 // Reads lines from the reader until reaching the gocog endmark
 // Writes out the generator code to a file with the given name
-// any lines that start with whitespace and then prefix will have
-// the prefix removed (this is to support single line comments)
-func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string, counter int) error {
+// Any lines that start with the prefix or indent of the first line
+// will have the prefix (for single line comments) or indent (for multi-
+// line comments) removed.
+// counter is a unique integer for each generator block in the same file.
+// cmd is the command (if any) explicitly specified in the start marker.
+func (p *Processor) cogGeneratorCode(
+	r *bufio.Reader,
+	w io.Writer,
+	prefix string,
+	counter int,
+	cmd string,
+) error {
 	p.tracef("cogging generator code")
-	lines, _, err := readUntil(r, p.OutMark, p.ExtraLine)
+	lines, _, _, _, err := readUntil(r, p.OutRegexp, p.ExtraLine)
 	if err == io.EOF {
 		return io.ErrUnexpectedEOF
 	}
@@ -200,7 +224,7 @@ func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string
 		if p.ExtraLine {
 			ignored = 2
 		}
-		if err := p.generate(w, lines[:len(lines)-ignored], prefix, counter); err != nil {
+		if err := p.generate(w, lines[:len(lines)-ignored], prefix, counter, cmd); err != nil {
 			return err
 		}
 	}
@@ -211,7 +235,13 @@ func (p *Processor) cogGeneratorCode(r *bufio.Reader, w io.Writer, prefix string
 // generate writes out the generator code to a file and runs it.
 // If running the code doesn't return any errors, the output is written to the output file.
 // The file with the generator code is always deleted at the end of this function.
-func (p *Processor) generate(w io.Writer, lines []string, prefix string, counter int) error {
+func (p *Processor) generate(
+	w io.Writer,
+	lines []string,
+	prefix string,
+	counter int,
+	cmd string,
+) error {
 	p.tracef("generating runnable code")
 	name := filepath.Base(p.File)
 	dir := filepath.Dir(p.File)
@@ -229,7 +259,7 @@ func (p *Processor) generate(w io.Writer, lines []string, prefix string, counter
 	}
 
 	b := bytes.Buffer{}
-	if err := p.runFile(gen, &b); err != nil {
+	if err := p.runFile(gen, &b, cmd); err != nil {
 		return err
 	}
 
@@ -248,7 +278,7 @@ func (p *Processor) generate(w io.Writer, lines []string, prefix string, counter
 
 // runFile executes the given file with the command line specified in the Processor's options.
 // If the process exits without an error, the output is written to the writer.
-func (p *Processor) runFile(f string, w io.Writer) error {
+func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 	p.tracef("output file %v", f)
 	if p.Verbose {
 		contents, err := os.ReadFile(f)
@@ -257,7 +287,9 @@ func (p *Processor) runFile(f string, w io.Writer) error {
 		}
 		p.tracef("file contents:\n%s", contents)
 	}
-	cmd := p.Command
+	if cmd == "" {
+		cmd = p.Command
+	}
 	if strings.Contains(cmd, "%s") {
 		cmd = fmt.Sprintf(cmd, f)
 	}
@@ -280,7 +312,7 @@ func (p *Processor) runFile(f string, w io.Writer) error {
 func (p *Processor) cogToEnd(r *bufio.Reader, w io.Writer) error {
 	p.tracef("cogging to end")
 	// we'll drop all but the COG_END line, so no need to keep them in memory
-	line, found, err := findLine(r, p.EndMark)
+	line, found, err := findLine(r, p.EndRegexp)
 	if err == io.EOF && !found {
 		if !p.UseEOF {
 			return io.ErrUnexpectedEOF
