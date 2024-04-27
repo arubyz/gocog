@@ -133,11 +133,12 @@ func (p *Processor) gen(r *bufio.Reader, w io.Writer) error {
 			return err
 		}
 
-		if err := p.cogGeneratorCode(r, w, prefix, counter, cmd); err != nil {
+		output, err := p.cogGeneratorCode(r, w, prefix, counter, cmd)
+		if err != nil {
 			return err
 		}
 
-		if err := p.cogToEnd(r, w); err != nil {
+		if err := p.cogToEnd(r, w, output); err != nil {
 			return err
 		}
 	}
@@ -201,20 +202,20 @@ func (p *Processor) cogGeneratorCode(
 	prefix string,
 	counter int,
 	cmd string,
-) error {
+) (output string, err error) {
 	p.tracef("cogging generator code")
 	lines, _, _, _, err := readUntil(r, p.OutRegexp, p.ExtraLine)
 	if err == io.EOF {
-		return io.ErrUnexpectedEOF
+		return "", io.ErrUnexpectedEOF
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// we have to write this out both to the output file and to the code file that we'll be running
 	for _, line := range lines {
 		if _, err := w.Write([]byte(line)); err != nil {
-			return err
+			return "", err
 		}
 	}
 	p.tracef("Wrote %v lines to output file", len(lines))
@@ -224,12 +225,10 @@ func (p *Processor) cogGeneratorCode(
 		if p.ExtraLine {
 			ignored = 2
 		}
-		if err := p.generate(w, lines[:len(lines)-ignored], prefix, counter, cmd); err != nil {
-			return err
-		}
+		return p.generate(w, lines[:len(lines)-ignored], prefix, counter, cmd)
 	}
 
-	return nil
+	return "", nil
 }
 
 // generate writes out the generator code to a file and runs it.
@@ -241,7 +240,7 @@ func (p *Processor) generate(
 	prefix string,
 	counter int,
 	cmd string,
-) error {
+) (output string, err error) {
 	p.tracef("generating runnable code")
 	name := filepath.Base(p.File)
 	dir := filepath.Dir(p.File)
@@ -255,25 +254,15 @@ func (p *Processor) generate(
 
 	// write all but the last line to the generator file
 	if err := writeNewFile(gen, lines, prefix); err != nil {
-		return err
+		return "", err
 	}
 
 	b := bytes.Buffer{}
 	if err := p.runFile(gen, &b, cmd); err != nil {
-		return err
+		return "", err
 	}
 
-	// indent each output line according to the indent of the start line
-	trimmedPrefix := strings.TrimLeftFunc(prefix, unicode.IsSpace)
-	indent := strings.Repeat(" ", len(prefix)-len(trimmedPrefix))
-	scanner := bufio.NewScanner(strings.NewReader(b.String()))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if _, err := fmt.Fprintf(w, "%s%s\n", indent, line); err != nil {
-			return err
-		}
-	}
-	return nil
+	return b.String(), nil
 }
 
 // runFile executes the given file with the command line specified in the Processor's options.
@@ -309,7 +298,7 @@ func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 }
 
 // cogToEnd reads the old generateed code, up until the end tag. All but the last line is discarded.
-func (p *Processor) cogToEnd(r *bufio.Reader, w io.Writer) error {
+func (p *Processor) cogToEnd(r *bufio.Reader, w io.Writer, output string) error {
 	p.tracef("cogging to end")
 	// we'll drop all but the COG_END line, so no need to keep them in memory
 	line, found, err := findLine(r, p.EndRegexp)
@@ -318,16 +307,27 @@ func (p *Processor) cogToEnd(r *bufio.Reader, w io.Writer) error {
 			return io.ErrUnexpectedEOF
 		}
 		p.tracef("No gocog end statement, treating EOF as end statement.")
-		return io.EOF
 	}
 	if err != nil && err != io.EOF {
 		return err
 	}
 
-	// if there's no error, found should always be true, so just write out
-	if _, err := w.Write([]byte(line)); err != nil {
-		return err
+	// indent each output line according to the indent of the line with the end mark
+	trimmedLine := strings.TrimLeftFunc(line, unicode.IsSpace)
+	indent := strings.Repeat(" ", len(line)-len(trimmedLine))
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if _, err := fmt.Fprintf(w, "%s%s\n", indent, line); err != nil {
+			return err
+		}
 	}
-	p.tracef("Wrote 1 line to output file")
+
+	if found {
+		if _, err := w.Write([]byte(line)); err != nil {
+			return err
+		}
+		p.tracef("Wrote 1 line to output file")
+	}
 	return err
 }

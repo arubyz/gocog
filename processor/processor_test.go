@@ -81,7 +81,7 @@ func TestCogToEnd(t *testing.T) {
 		out := &bytes.Buffer{}
 
 		r := bufio.NewReader(in)
-		err := p.cogToEnd(r, out)
+		err := p.cogToEnd(r, out, "")
 
 		if err != test.err {
 			t.Errorf("CogToEnd Test %d: Expected error %v, got %v", i, test.err, err)

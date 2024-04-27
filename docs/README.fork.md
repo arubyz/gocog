@@ -38,8 +38,12 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
   ```
 
 * The output of generator code is indented according to the first non-whitespace character
-  on the line with the start mark.  This relieves generator code from having to manually
-  apply the appropriate indent to each line.
+  on the line with the end mark.  This relieves generator code from having to manually
+  apply the appropriate indent to each line.  Using the line with the start mark or 
+  output mark instead doesn't always work, since these lines may be inside a multi-line
+  block comment with additional indentation.  The end mark though should always be in a
+  single-line comment, regardless of whether it's a block or line comment, so that line's
+  indent should always be indicative of the desired indent for the generated lines.
 
 * The logic used to remove indentation and/or comment prefixes from generator code has
   been improved to better support generator code which is column-sensitive (such as perl
