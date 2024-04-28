@@ -71,6 +71,7 @@ func (p *Processor) Run() error {
 	p.tracef("Output file: '%s'", output)
 
 	if err == NoCogCode {
+		p.tracef("Removing output file: '%s'\n", output)
 		if err := os.Remove(output); err != nil {
 			p.Println(err)
 		}
@@ -80,6 +81,7 @@ func (p *Processor) Run() error {
 
 	// this is the success case - got to the end of the file without any other errors
 	if err == io.EOF {
+		p.tracef("Removing original file: '%s'\n", p.File)
 		if err := os.Remove(p.File); err != nil {
 			p.Printf("Error removing original file '%s': %s", p.File, err)
 			return err
@@ -94,6 +96,7 @@ func (p *Processor) Run() error {
 	} else {
 		p.Printf("Error processing cog file '%s': %s", p.File, err)
 		if output != "" {
+			p.tracef("Removing output file: '%s'\n", output)
 			if err := os.Remove(output); err != nil {
 				p.Println(err)
 			}
@@ -248,10 +251,14 @@ func (p *Processor) generate(
 	name = "cog_" + name
 	gen := fmt.Sprintf("%s_cog_%d_%s", filepath.Join(dir, name), counter, p.Ext)
 	if !p.Retain {
-		defer os.Remove(gen)
+		defer func() {
+			p.tracef("Removing generator code file: '%s'\n", gen)
+			os.Remove(gen)
+		}()
 	}
 
 	// write all but the last line to the generator file
+	p.tracef("Creating generator code file: '%s'\n", gen)
 	if err := writeNewFile(gen, lines, prefix); err != nil {
 		return "", err
 	}
