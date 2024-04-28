@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -34,6 +35,8 @@ func New(file string, opt *Options) *Processor {
 	}
 	return &Processor{
 		file,
+		filepath.Dir(file),
+		filepath.Base(file),
 		regexp.MustCompile(opt.StartMark),
 		regexp.MustCompile(opt.OutMark),
 		regexp.MustCompile(opt.EndMark),
@@ -45,6 +48,8 @@ func New(file string, opt *Options) *Processor {
 // Processor holds the data for generating code for a specific file.
 type Processor struct {
 	File        string
+	FileDir     string
+	FileName    string
 	StartRegexp *regexp.Regexp
 	OutRegexp   *regexp.Regexp
 	EndRegexp   *regexp.Regexp
@@ -117,7 +122,12 @@ func (p *Processor) tryCog() (output string, err error) {
 
 	r := bufio.NewReader(in)
 
-	output = p.File + "_cog"
+	values := map[string]string{
+		"TMP":  os.TempDir(),
+		"DIR":  p.FileDir,
+		"FILE": p.FileName,
+	}
+	output = os.Expand(p.OutFile, func(s string) string { return values[s] })
 	p.tracef("Writing output to %s", output)
 	out, err := createNew(output)
 	if err != nil {
@@ -244,12 +254,13 @@ func (p *Processor) generate(
 	cmd string,
 ) (output string, err error) {
 	p.tracef("generating runnable code")
-	name := filepath.Base(p.File)
-	dir := filepath.Dir(p.File)
-	// prefix the name to ensure it starts with alphanumeric, this is required
-	// to be go-runnable.
-	name = "cog_" + name
-	gen := fmt.Sprintf("%s_cog_%d_%s", filepath.Join(dir, name), counter, p.Ext)
+	values := map[string]string{
+		"TMP":  os.TempDir(),
+		"DIR":  p.FileDir,
+		"FILE": p.FileName,
+		"CTR":  strconv.Itoa(counter),
+	}
+	gen := os.Expand(p.GenFile, func(s string) string { return values[s] })
 	if !p.Retain {
 		defer func() {
 			p.tracef("Removing generator code file: '%s'\n", gen)
@@ -287,7 +298,6 @@ func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 	// as the input file, so that the generator code in the input file can reference other
 	// files relatively.  Use an absolute path path for the temporary file containing the
 	// generator code since it may not be in the same directory as the input file.
-	dir := filepath.Dir(p.File)
 	f, err := filepath.Abs(f)
 	if err != nil {
 		return err
@@ -308,7 +318,7 @@ func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 		}
 	}
 
-	if err := run(dir, cmd, args, w, p.Logger); err != nil {
+	if err := run(p.FileDir, cmd, args, w, p.Logger); err != nil {
 		return fmt.Errorf("Error generating code from source: %s", err)
 	}
 	return nil

@@ -25,10 +25,11 @@ func init() {
 func main() {
 	opts := processor.Options{
 		Args:      []string{"%s"},
-		Ext:       ".txt",
 		StartMark: "\\[\\[\\[generate\\s*([^]]*)\\]\\]\\]",
 		OutMark:   "\\[\\[\\[output\\]\\]\\]",
 		EndMark:   "\\[\\[\\[end\\]\\]\\]",
+		GenFile:   "$DIR/cog_${FILE}_cog_${CTR}_.txt",
+		OutFile:   "$DIR/${FILE}_cog",
 	}
 
 	p := flags.NewParser(&opts, flags.Default)
@@ -57,7 +58,7 @@ func main() {
 	// 	fmt.Printf("\tver = \"%d%02d%02d\"\n", t.Year(), int(t.Month()), t.Day())
 	// }
 	// @OUTPUT@
-	ver = "20240427"
+	ver = "20240428"
 	// @END@
 	if opts.Version {
 		fmt.Printf(version, ver)
@@ -108,10 +109,6 @@ func handleCommandLine(args []string, opts processor.Options) ([]*processor.Proc
 
 	if len(remaining) < 1 {
 		return nil, errors.New("No files targeted on command line")
-	}
-
-	if len(opts.Ext) > 0 && opts.Ext[:1] != "." {
-		opts.Ext = "." + opts.Ext
 	}
 
 	return handleRemaining(remaining, &opts)

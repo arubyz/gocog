@@ -131,4 +131,26 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
   }
   ```
 
+* The `--ext` argument has been replaced by `--genfile` which provides a more generic
+  way to specify the the full path of the temporary file containing generator code.
+  Within this template, ths follow variables are expanded:
+
+  * `$TMP`: The absolute path to the OS-defined temporary file directory
+
+  * `$DIR`: The directory containing the input file
+
+  * `$FILE`: The file name and extension (without directory) of the input file
+
+  * `$CTR`: A counter value which is incremented for each generator block in a given
+    input file
+
+* A new `--outfile` argument has been added which specifies a template for the full path
+  to the temporary output file.  Within this template, ths follow variables are expanded:
+
+  * `$TMP`: The absolute path to the OS-defined temporary file directory
+
+  * `$DIR`: The directory containing the input file
+
+  * `$FILE`: The file name and extension (without directory) of the input file
+
 You can view the original `README.md` file [here](../README.md).
