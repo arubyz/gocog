@@ -11,6 +11,10 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
 * Added the `--retain` (`-r`) option to aid debugging by preventing temporary files
   with generator code from being deleted.
 
+* When operating over multiple files using `@filelist.txt` syntax, the files listed
+  are interpreted relative to the directory containing `filelist.txt`, not the current
+  directory when `gocog` is run.
+
 * Removed the default value of `go` for `--cmd`, requiring it to be explicitly specified 
   either on the command line or via the start mark (see below).  Also changed the default
   for `--ext` to `.txt` and for `--args` to `%s`, which are defaults that work well for

@@ -8,6 +8,7 @@ import (
 	"gocog/processor"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -143,6 +144,14 @@ func handleFilelist(name string, opts *processor.Options) ([]*processor.Processo
 		return nil, err
 	}
 	lines := strings.SplitAfter(string(b), "\n")
+
+	// filenames in the list file are considered relative to the location of the list
+	// file itself, so make sure that's the current directory.
+	dir := filepath.Dir(name)
+	log.Printf("Changing directory: %s", dir)
+	if err = os.Chdir(dir); err != nil {
+		return nil, err
+	}
 
 	procs := make([]*processor.Processor, 0, len(lines))
 	for i, line := range lines {
