@@ -37,9 +37,10 @@ func New(file string, opt *Options) *Processor {
 		file,
 		filepath.Dir(file),
 		filepath.Base(file),
-		regexp.MustCompile(opt.StartMark),
-		regexp.MustCompile(opt.OutMark),
-		regexp.MustCompile(opt.EndMark),
+		regexp.MustCompile(opt.GenStart),
+		regexp.MustCompile(opt.GenEnd),
+		regexp.MustCompile(opt.OutStart),
+		regexp.MustCompile(opt.OutEnd),
 		opt,
 		logger,
 	}
@@ -47,12 +48,13 @@ func New(file string, opt *Options) *Processor {
 
 // Processor holds the data for generating code for a specific file.
 type Processor struct {
-	File        string
-	FileDir     string
-	FileName    string
-	StartRegexp *regexp.Regexp
-	OutRegexp   *regexp.Regexp
-	EndRegexp   *regexp.Regexp
+	File           string
+	FileDir        string
+	FileName       string
+	GenStartRegexp *regexp.Regexp
+	GenEndRegexp   *regexp.Regexp
+	OutStartRegexp *regexp.Regexp
+	OutEndRegexp   *regexp.Regexp
 	*Options
 	*log.Logger
 }
@@ -157,19 +159,19 @@ func (p *Processor) gen(r *bufio.Reader, w io.Writer) error {
 	}
 }
 
-// cogPlainText reads any plaintext up to and including the startMark.
+// cogPlainText reads any plaintext up to and including the GenStart regexp.
 // If this is the first time we've read the file and we reach the end before
-// finding the start mark, we won't write anything to the output file.
+// finding the GenStart regexp, we won't write anything to the output file.
 // Otherwise we'll write this plaintext back out to the output file as-is.
-// Any prefix before the startmark is returned so we can handle single line comment tags.
-// The match for the first regexp group (if any) in startMark is returned,
+// Any prefix before the GenStart regexp is returned so we can handle single line comment tags.
+// The match for the first regexp group (if any) in GenStart is returned.
 func (p *Processor) cogPlainText(
 	r *bufio.Reader,
 	w io.Writer,
 	firstRun bool,
 ) (prefix string, cmd string, err error) {
 	p.tracef("cogging plaintext")
-	lines, found, prefix, cmd, err := readUntil(r, p.StartRegexp, false)
+	lines, found, prefix, cmd, err := readUntil(r, p.GenStartRegexp)
 	if err == io.EOF {
 		if found {
 			// found gocog statement, but nothing after it
@@ -202,7 +204,8 @@ func (p *Processor) cogPlainText(
 	return prefix, cmd, err
 }
 
-// Reads lines from the reader until reaching the gocog endmark
+// Reads generator code lines from the reader until reaching the GenEnd regexp
+// If the OutStart regexp is defined then further reads lines until reaching it
 // Writes out the generator code to a file with the given name
 // Any lines that start with the prefix or indent of the first line
 // will have the prefix (for single line comments) or indent (for multi-
@@ -217,12 +220,26 @@ func (p *Processor) cogGeneratorCode(
 	cmd string,
 ) (output string, err error) {
 	p.tracef("cogging generator code")
-	lines, _, _, _, err := readUntil(r, p.OutRegexp, p.ExtraLine)
+	lines, _, _, _, err := readUntil(r, p.GenEndRegexp)
 	if err == io.EOF {
 		return "", io.ErrUnexpectedEOF
 	}
 	if err != nil {
 		return "", err
+	}
+	generatorLines := len(lines) - 1
+
+	// if we have an optional marker for the start of output, read more lines until
+	// we find it
+	if p.OutStart != "" {
+		moreLines, _, _, _, err := readUntil(r, p.OutStartRegexp)
+		if err == io.EOF {
+			return "", io.ErrUnexpectedEOF
+		}
+		if err != nil {
+			return "", err
+		}
+		lines = append(lines, moreLines...)
 	}
 
 	// we have to write this out both to the output file and to the code file that we'll be running
@@ -234,11 +251,7 @@ func (p *Processor) cogGeneratorCode(
 	p.tracef("Wrote %v lines to output file", len(lines))
 
 	if !p.Excise && len(lines) > 0 {
-		ignored := 1
-		if p.ExtraLine {
-			ignored = 2
-		}
-		return p.generate(lines[:len(lines)-ignored], prefix, counter, cmd)
+		return p.generate(lines[:generatorLines], prefix, counter, cmd)
 	}
 
 	return "", nil
@@ -304,7 +317,7 @@ func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 	}
 
 	if cmd == "" {
-		cmd = p.Command
+		return fmt.Errorf("No generator code processor defined")
 	}
 	if strings.Contains(cmd, "%s") {
 		cmd = fmt.Sprintf(cmd, f)
@@ -328,7 +341,7 @@ func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 func (p *Processor) cogToEnd(r *bufio.Reader, w io.Writer, output string) error {
 	p.tracef("cogging to end")
 	// we'll drop all but the COG_END line, so no need to keep them in memory
-	line, found, err := findLine(r, p.EndRegexp)
+	line, found, err := findLine(r, p.OutEndRegexp)
 	if err == io.EOF && !found {
 		if !p.UseEOF {
 			return io.ErrUnexpectedEOF

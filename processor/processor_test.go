@@ -16,7 +16,7 @@ type CPTData struct {
 }
 
 func TestCogPlainText(t *testing.T) {
-	p := New("foo", &Options{StartMark: "@GENERATE@"})
+	p := New("foo", &Options{GenStart: "@GENERATE@"})
 
 	tests := []CPTData{
 		{"", "", "", true, NoCogCode},
@@ -69,8 +69,8 @@ func TestCogToEnd(t *testing.T) {
 	}
 
 	opts := &Options{
-		StartMark: "@GENERATE@",
-		EndMark:   "@END@",
+		GenStart: "@GENERATE@",
+		OutEnd:   "@END@",
 	}
 	p := New("foo", opts)
 

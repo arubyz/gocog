@@ -19,17 +19,28 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
   the same directory as the input file.  This makes it easy for generator code to
   reference other files which are in the same directory as the input file.
   
-* Removed the default value of `go` for `--cmd`, requiring it to be explicitly specified 
-  either on the command line or via the start mark (see below).  Also changed the default
-  for `--ext` to `.txt` and for `--args` to `%s`, which are defaults that work well for
-  a broad set of (non-Go) languages processors.
+* Removed the `--cmd` argument, requiring the value to be explicitly specified via the
+  `--genstart` regexp (see below).  Also changed the default for `--ext` to `.txt` and for `--args`
+  to `%s`, which are defaults that work well for a broad set of (non-Go) languages processors.
 
-* Generalized the `--startmark` and `--endmark` arguments and added an additional `--outmark`
-  argument.  The specification of markers was also changed from literal strings to regular
-  expressions.  For `--startmark` specifically, if the regular expression defines a group
-  then the value that group matches is used as the command to process the generator code
-  for that block.  These changes enable syntax as follows:
-  ```c
+* Generalized the `--startmark` and `--endmark` arguments by replacing them with four different
+  marker regexp definitions:
+
+  * `--genstart`: The first line of generator code is read immediately after the line containing this regexp.
+    If this regexp defines a group then the value that group matches is used as the command to process
+    the generator code for that block.
+
+  * `--genend`: The last line of generator code is read immediately before the line containing this regexp.
+
+  * `--outstart` (optional): If defined, the first line of output will be inserted immediately after
+    the line containing this regexp.  If not defined, the first line of output will be inserted immediately
+    after the line containing the `--genend` regexp.
+
+  * `--outend`: The last line of output will be inserted immediately before the line containing this regexp.
+
+  These new arguments and their default values enable syntax as follows:
+
+  ```cpp
   void main()
   {
     // [[[generate perl]]]
@@ -40,16 +51,56 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
     // [[[end]]]
   }
   ```
+
+  And setting `--outstart` to something like `\*\/` supports multi-line comment delimiters
+  being on their own line as follows:
+
+  ```c
+  void main()
+  {
+      /*
+        [[[generate perl]]]
+        print <<done
+        if (1)
+            printf("Hello, world");
+        done
+        [[[output]]]
+      */
+      if (1)
+          printf("Hello, world");
+      /* [[[end]]] */
+  }
+  ```
+
+  These arguments also allow the generator code and output to be separated, eg:
+
+  ```cpp
+  // [[[generate perl]]]
+  // print <<done
+  // if (1)
+  //     printf("Hello, world");
+  // done
+  // [[[end]]]
+  void main()
+  {
+      // [[[output]]]
+      if (1)
+          printf("Hello, world");
+      // [[[end]]]
+  }
+  ```
+
   The syntax of the original version of `gocog` can be enabled with:
+
   ```sh
-  gocog --startmark '\[\[\[gocog' --outmark 'gocog\]\]\]' --endmark '\[\[\[end\]\]\]'
+  gocog --genstart '\[\[\[gocog' --genend 'gocog\]\]\]' --outend '\[\[\[end\]\]\]'
   ```
 
 * The output of generator code is indented according to the first non-whitespace character
-  on the line with the end mark.  This relieves generator code from having to manually
-  apply the appropriate indent to each line.  Using the line with the start mark or 
-  output mark instead doesn't always work, since these lines may be inside a multi-line
-  block comment with additional indentation.  The end mark though should always be in a
+  on the line with the `--outend` regexp.  This relieves generator code from having to manually
+  apply the appropriate indent to each line.  Using instead the line with the `--genstart` or 
+  `--genend` regexp doesn't always work, since these lines may be inside a multi-line
+  block comment with additional indentation.  The `--outend` regexp though should always be in a
   single-line comment, regardless of whether it's a block or line comment, so that line's
   indent should always be indicative of the desired indent for the generated lines.
 
@@ -59,8 +110,8 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
   occur on the first column).  The rules are:
 
   1. If the first line of generator code has the same prefix (including indent) as the line
-     with the start mark, then all lines of generator code are expected to start with that
-     same prefix (which is remove).  This handles generator code in line-oriented comments
+     with the `--genstart` regexp, then all lines of generator code are expected to start with that
+     same prefix (which is removed).  This handles generator code in line-oriented comments
      like this:
      ```cpp
      void main()
@@ -110,26 +161,6 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
          /* [[[end]]] */
      }
      ```
-
-* Added the `--extraline` (`-L`) option to cause the line after the line with the output
-  mark to also be considered part of the output mark.  This accommodates generator code
-  in block comments where the comment end delimiter is on its own line, like this:
-  ```c
-  void main()
-  {
-      /*
-      [[[generate perl]]]
-      print <<done
-      if (1)
-          printf("Hello, world");
-      done
-      [[[output]]]
-      */
-      if (1)
-          printf("Hello, world");
-      /* [[[end]]] */
-  }
-  ```
 
 * The `--ext` argument has been replaced by `--genfile` which provides a more generic
   way to specify the the full path of the temporary file containing generator code.

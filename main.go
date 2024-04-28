@@ -1,4 +1,4 @@
-/* @GENERATE@
+/* @GENERATE go@
 package main
 import(
   "fmt"
@@ -31,25 +31,29 @@ Usage:
 
 Application Options:
 
-	-z, --eof        The end marker can be assumed at eof.
-	-v, --verbose    enables verbose output
-	-q, --quiet      turns off all output
-	-S, --serial     Write to the specified cog files serially
-	-c, --cmd=       The command used to run the generator code (default: perl)
-	-a, --args=      Comma separated arguments to cmd, %s for the code file
-	                 (default: [%s])
-	-e, --ext=       Extension to append to the generator filename (default: .pl)
-	-M, --startmark= String that starts gocog statements (default: [[[generate]]])
-	-O, --outmark=   String that starts gocog output (default: [[[output]]])
-	-E, --endmark=   String that ends gocog output (default: [[[end]]])
-	-L, --extraline  Include an extra line as part of the output mark
-	-x, --excise     Excise all the generated output without running the
-	                 generators.
-	-r, --retain     Don't delete temporary files containing generator code.
-	-V, --version    Display the version of gocog
+	-z, --eof       The end marker can be assumed at eof.
+	-v, --verbose   enables verbose output
+	-q, --quiet     turns off all output
+	-S, --serial    Write to the specified cog files serially
+	-a, --args=     Comma separated arguments to cmd, %s for the code file
+	                (default: [%s])
+	-g, --genstart= Regexp that starts gocog statements (default:
+	                \[\[\[generate\s+([^]]+)\]\]\])
+	-G, --genend=   Regexp that ends gocog statements (default:
+	                \[\[\[output\]\]\])
+	-o, --outstart= Optional regexp that starts gocog output
+	-O, --outend=   Regexp that ends gocog output (default: \[\[\[end\]\]\])
+	-f, --genfile=  Filename template for temp generator code files (default:
+	                $DIR/cog_${FILE}_cog_${CTR}_.txt)
+	-F, --outfile=  Filename template for temp output files (default:
+	                $DIR/${FILE}_cog)
+	-x, --excise    Excise all the generated output without running the
+	                generators.
+	-r, --retain    Don't delete temporary files containing generator code.
+	-V, --version   Display the version of gocog
 
 Help Options:
 
-	-h, --help       Show this help message
+	-h, --help      Show this help message
 */
 package main

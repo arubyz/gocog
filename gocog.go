@@ -24,12 +24,12 @@ func init() {
 
 func main() {
 	opts := processor.Options{
-		Args:      []string{"%s"},
-		StartMark: "\\[\\[\\[generate\\s*([^]]*)\\]\\]\\]",
-		OutMark:   "\\[\\[\\[output\\]\\]\\]",
-		EndMark:   "\\[\\[\\[end\\]\\]\\]",
-		GenFile:   "$DIR/cog_${FILE}_cog_${CTR}_.txt",
-		OutFile:   "$DIR/${FILE}_cog",
+		Args:     []string{"%s"},
+		GenStart: "\\[\\[\\[generate\\s+([^]]+)\\]\\]\\]",
+		GenEnd:   "\\[\\[\\[output\\]\\]\\]",
+		OutEnd:   "\\[\\[\\[end\\]\\]\\]",
+		GenFile:  "$DIR/cog_${FILE}_cog_${CTR}_.txt",
+		OutFile:  "$DIR/${FILE}_cog",
 	}
 
 	p := flags.NewParser(&opts, flags.Default)
@@ -47,7 +47,7 @@ func main() {
 	}
 
 	ver := ""
-	// @GENERATE@
+	// @GENERATE go@
 	// package main
 	// import (
 	//   "fmt"

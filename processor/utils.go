@@ -78,14 +78,12 @@ func writeNewFile(name string, lines []string, prefix string) error {
 }
 
 // readUntil reads and returns lines from a reader until the marker is found.
-// if extraLine is true then one additional line after the marker is included.
 // start returns the index of the first character of the found marker.
 // submatch returns the values of the first regexp group (if any) in marker.
 // found is true if the marker was found. Note that found == true and err == io.EOF is possible.
 func readUntil(
 	r *bufio.Reader,
 	marker *regexp.Regexp,
-	extraLine bool,
 ) (lines []string, found bool, prefix string, submatch string, err error) {
 	lines = make([]string, 0, 50)
 	for err == nil {
@@ -96,11 +94,6 @@ func readUntil(
 			submatch := ""
 			if 4 <= len(matches) {
 				submatch = line[matches[2]:matches[3]]
-			}
-			if extraLine {
-				var nextLine string
-				nextLine, err = r.ReadString('\n')
-				lines = append(lines, nextLine)
 			}
 			return lines, true, line[:matches[0]], submatch, err
 		}
