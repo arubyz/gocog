@@ -14,10 +14,11 @@ import (
 )
 
 // run executes the command with the given arguments, writing output to the given writer and errors to the logger.
-func run(cmd string, args []string, stdout io.Writer, errLog *log.Logger) error {
-	errLog.Printf("running %q", append([]string{cmd}, args...))
+func run(dir string, cmd string, args []string, stdout io.Writer, errLog *log.Logger) error {
+	errLog.Printf("running in %s: %q", dir, append([]string{cmd}, args...))
 	errOut := bytes.Buffer{}
 	c := exec.Command(cmd, args...)
+	c.Dir = dir
 	c.Stdout = stdout
 	c.Stderr = &errOut
 

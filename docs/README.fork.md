@@ -15,6 +15,10 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
   are interpreted relative to the directory containing `filelist.txt`, not the current
   directory when `gocog` is run.
 
+* When running a command to process generator code, the current directory is set to
+  the same directory as the input file.  This makes it easy for generator code to
+  reference other files which are in the same directory as the input file.
+  
 * Removed the default value of `go` for `--cmd`, requiring it to be explicitly specified 
   either on the command line or via the start mark (see below).  Also changed the default
   for `--ext` to `.txt` and for `--args` to `%s`, which are defaults that work well for

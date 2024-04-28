@@ -225,7 +225,7 @@ func (p *Processor) cogGeneratorCode(
 		if p.ExtraLine {
 			ignored = 2
 		}
-		return p.generate(w, lines[:len(lines)-ignored], prefix, counter, cmd)
+		return p.generate(lines[:len(lines)-ignored], prefix, counter, cmd)
 	}
 
 	return "", nil
@@ -235,7 +235,6 @@ func (p *Processor) cogGeneratorCode(
 // If running the code doesn't return any errors, the output is written to the output file.
 // The file with the generator code is always deleted at the end of this function.
 func (p *Processor) generate(
-	w io.Writer,
 	lines []string,
 	prefix string,
 	counter int,
@@ -276,6 +275,17 @@ func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 		}
 		p.tracef("file contents:\n%s", contents)
 	}
+
+	// When we run the generator command the current directory should be the same directory
+	// as the input file, so that the generator code in the input file can reference other
+	// files relatively.  Use an absolute path path for the temporary file containing the
+	// generator code since it may not be in the same directory as the input file.
+	dir := filepath.Dir(p.File)
+	f, err := filepath.Abs(f)
+	if err != nil {
+		return err
+	}
+
 	if cmd == "" {
 		cmd = p.Command
 	}
@@ -291,7 +301,7 @@ func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 		}
 	}
 
-	if err := run(cmd, args, w, p.Logger); err != nil {
+	if err := run(dir, cmd, args, w, p.Logger); err != nil {
 		return fmt.Errorf("Error generating code from source: %s", err)
 	}
 	return nil
