@@ -27,8 +27,21 @@ This is a fork of [natefinch/gocog](https://github.com/natefinch/gocog) with the
   marker regexp definitions:
 
   * `--genstart`: The first line of generator code is read immediately after the line containing this regexp.
-    If this regexp defines a group then the value that group matches is used as the command to process
-    the generator code for that block.
+    This regexp should contain at least one group, and its sub-matches are interpreted as follows:
+
+    * The first sub-match (required) is used as the command to process the generator code for that block.
+
+    * The second sub-match (optional) is used as the generator code to run.  This allow concise one-line
+      generator code usage such as:
+
+      ```cpp
+      int main()
+      {
+          // @@generate perl print("return -42;");
+          return -42;
+          // @@end
+      }
+      ```
 
   * `--genend`: The last line of generator code is read immediately before the line containing this regexp.
 

@@ -143,12 +143,23 @@ func (p *Processor) tryCog() (output string, err error) {
 // gen enacapsulates the process of generating text from an input and writing to an output.
 func (p *Processor) gen(r *bufio.Reader, w io.Writer) error {
 	for counter := 1; ; counter++ {
-		prefix, cmd, err := p.cogPlainText(r, w, counter == 1)
+		prefix, submatches, err := p.cogPlainText(r, w, counter == 1)
 		if err != nil {
 			return err
 		}
 
-		output, err := p.cogGeneratorCode(r, w, prefix, counter, cmd)
+		if len(submatches) == 0 {
+			return fmt.Errorf("No generator code processor defined")
+		}
+		cmd := submatches[0]
+
+		var output string
+		if 1 < len(submatches) {
+			lines := []string{submatches[1]}
+			output, err = p.generate(lines, prefix, counter, cmd)
+		} else {
+			output, err = p.cogGeneratorCode(r, w, prefix, counter, cmd)
+		}
 		if err != nil {
 			return err
 		}
@@ -169,39 +180,47 @@ func (p *Processor) cogPlainText(
 	r *bufio.Reader,
 	w io.Writer,
 	firstRun bool,
-) (prefix string, cmd string, err error) {
+) (prefix string, submatches []string, err error) {
 	p.tracef("cogging plaintext")
-	lines, found, prefix, cmd, err := readUntil(r, p.GenStartRegexp)
+	lines, found, prefix, submatches, err := readUntil(r, p.GenStartRegexp)
 	if err == io.EOF {
 		if found {
 			// found gocog statement, but nothing after it
-			return "", "", io.ErrUnexpectedEOF
-		}
-		if firstRun {
+			if 1 < len(submatches) && p.UseEOF {
+				// The file ended with a line containing the --genstart regexp (and has
+				// no final newline).  This is only valid if the --genstart regexp has a
+				// second submatch (containing the generator code to run) and options
+				// permit EOF to end the generator output.
+				lines[len(lines)-1] += "\n"
+				err = nil
+			} else {
+				return "", []string{}, io.ErrUnexpectedEOF
+			}
+		} else if firstRun {
 			// default case - no cog code, don't bother to write out anything
-			return "", "", NoCogCode
+			return "", []string{}, NoCogCode
 		}
 		// didn't find it, but this isn't the first time we've run
 		// so no big deal, we just ran off the end of the file.
 	}
 	if err != nil && err != io.EOF {
-		return "", "", err
+		return "", []string{}, err
 	}
 
 	// we can just write out the non-cog code to the output file
 	// this also writes out the cog start line (if any)
 	for _, line := range lines {
 		if _, err := w.Write([]byte(line)); err != nil {
-			return "", "", err
+			return "", []string{}, err
 		}
 	}
 	p.tracef("Wrote %v lines to output file", len(lines))
 
 	if !found {
-		return "", "", err
+		return "", []string{}, err
 	}
 
-	return prefix, cmd, err
+	return prefix, submatches, err
 }
 
 // Reads generator code lines from the reader until reaching the GenEnd regexp
@@ -316,9 +335,6 @@ func (p *Processor) runFile(f string, w io.Writer, cmd string) error {
 		return err
 	}
 
-	if cmd == "" {
-		return fmt.Errorf("No generator code processor defined")
-	}
 	if strings.Contains(cmd, "%s") {
 		cmd = fmt.Sprintf(cmd, f)
 	}

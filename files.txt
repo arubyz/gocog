@@ -1,4 +1,4 @@
-gocog.go --startmark='@GENERATE\s+([^]]+)@' --outmark=@OUTPUT@ --endmark=@END@ --genfile '$DIR/cog_${FILE}_cog_${CTR}_.go' --args run --args '%s'
-doc.go --startmark='@GENERATE\s+([^]]+)@' --outmark=@OUTPUT@ --endmark=@END@ --eof --genfile '$DIR/cog_${FILE}_cog_${CTR}_.go' --args run --args '%s'
-main.go --startmark='@GENERATE\s+([^]]+)@' --outmark=@OUTPUT@ --endmark=@END@ --eof --genfile '$DIR/cog_${FILE}_cog_${CTR}_.go' --args run --args '%s'
-README.md --startmark='@GENERATE\s+([^]]+)@' --outmark=@OUTPUT@ --endmark=@END@ --genfile '$DIR/cog_${FILE}_cog_${CTR}_.go' --args run --args '%s'
+gocog.go --genstart='@GENERATE\s+([^]]+)@' --genend=@OUTPUT@ --outend=@END@ --genfile '$DIR/cog_${FILE}_cog_${CTR}_.go' --args run --args '%s'
+doc.go --genstart='@GENERATE\s+([^]]+)@' --genend=@OUTPUT@ --outend=@END@ --eof --genfile '$DIR/cog_${FILE}_cog_${CTR}_.go' --args run --args '%s'
+main.go --genstart='@GENERATE\s+([^]]+)@' --genend=@OUTPUT@ --outend=@END@ --eof --genfile '$DIR/cog_${FILE}_cog_${CTR}_.go' --args run --args '%s'
+README.md --genstart='@GENERATE\s+([^]]+)@' --genend=@OUTPUT@ --outend=@END@ --genfile '$DIR/cog_${FILE}_cog_${CTR}_.go' --args run --args '%s'

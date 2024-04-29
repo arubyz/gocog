@@ -58,7 +58,7 @@ func main() {
 	// 	fmt.Printf("\tver = \"%d%02d%02d\"\n", t.Year(), int(t.Month()), t.Day())
 	// }
 	// @OUTPUT@
-	ver = "20240428"
+	ver = "20240429"
 	// @END@
 	if opts.Version {
 		fmt.Printf(version, ver)

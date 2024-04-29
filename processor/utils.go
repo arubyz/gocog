@@ -84,21 +84,21 @@ func writeNewFile(name string, lines []string, prefix string) error {
 func readUntil(
 	r *bufio.Reader,
 	marker *regexp.Regexp,
-) (lines []string, found bool, prefix string, submatch string, err error) {
+) (lines []string, found bool, prefix string, submatches []string, err error) {
 	lines = make([]string, 0, 50)
 	for err == nil {
 		var line string
 		line, err = r.ReadString('\n')
 		lines = append(lines, line)
 		if matches := marker.FindStringSubmatchIndex(line); matches != nil {
-			submatch := ""
-			if 4 <= len(matches) {
-				submatch = line[matches[2]:matches[3]]
+			submatches = []string{}
+			for i := 3; i < len(matches); i += 2 {
+				submatches = append(submatches, line[matches[i-1]:matches[i]])
 			}
-			return lines, true, line[:matches[0]], submatch, err
+			return lines, true, line[:matches[0]], submatches, err
 		}
 	}
-	return lines, false, "", "", err
+	return lines, false, "", []string{}, err
 }
 
 // findLine reads lines from a reader until the marker is found, then the line with the marker is returned.
